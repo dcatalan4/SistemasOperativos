@@ -15,6 +15,7 @@ Abra `index.html` directamente en un navegador. No requiere servidor, base de da
 - Selector de algoritmo.
 - Campo de quantum cuando se selecciona Round Robin.
 - Diagrama de Gantt con colores por proceso.
+- Animación paso a paso al presionar **Simular**.
 - Tabla de resultados.
 - Promedios de espera, retorno y respuesta inicial.
 - Explicaciones educativas breves.
