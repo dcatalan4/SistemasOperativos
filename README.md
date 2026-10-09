@@ -1,59 +1,36 @@
-# Simulador educativo de planificación de procesos e hilos
+# Simulador de Planificación de CPU
 
-Aplicación HTML5, CSS3 y JavaScript puro para una exposición universitaria de Sistemas Operativos. Funciona sin conexión y se abre directamente desde `index.html`.
+Aplicación web sencilla para demostrar planificación de procesos en Sistemas Operativos.
 
-## Ejecución
+## Cómo abrirla
 
-1. Abra `index.html` en un navegador moderno.
-2. Seleccione un módulo, un algoritmo y un ejemplo precargado.
-3. Use **Iniciar**, **Pausar**, **Avanzar** y **Reiniciar** para controlar la simulación.
-4. Active el botón `⛶` para modo exposición.
+Abra `index.html` directamente en un navegador. No requiere servidor, base de datos, instalación de paquetes ni conexión a internet.
 
-No usa React, backend, bases de datos, CDN ni servicios externos.
+## Qué incluye
 
-## Qué demuestra cada módulo
+- Procesos editables con nombre, tiempo de llegada y duración.
+- Botón para agregar procesos.
+- Botón para limpiar la lista.
+- Ejemplo inicial con `P1`, `P2` y `P3`.
+- Selector de algoritmo.
+- Campo de quantum cuando se selecciona Round Robin.
+- Diagrama de Gantt con colores por proceso.
+- Tabla de resultados.
+- Promedios de espera, retorno y respuesta inicial.
+- Explicaciones educativas breves.
 
-- **Fundamentos:** estados de proceso, programa frente a proceso, ráfagas, E/S, métricas, cambio de contexto, planificadores de largo/mediano/corto plazo y diferencia entre política y mecanismo.
-- **Por lotes:** FCFS, SJF no expropiativo y SRTF con el mismo conjunto de procesos. Use el ejemplo “Caso verificable” para comprobar FCFS y SJF.
-- **Interactivos:** Round Robin, prioridades, envejecimiento, colas multinivel, MLFQ, estimación de ráfaga, garantizada, lotería y reparto justo.
-- **Tiempo real:** Rate Monotonic y EDF con instancias periódicas, plazos absolutos, carga de procesador e incumplimientos.
-- **Hilos:** modelos muchos a uno, uno a uno y muchos a muchos; hilos de usuario, hilos del núcleo y uno o dos núcleos.
+## Algoritmos implementados
 
-## Supuestos y simplificaciones
+- **FCFS:** primero en llegar, primero en ser atendido.
+- **SJF no expropiativo:** cuando la CPU queda libre, ejecuta el proceso disponible con menor duración.
+- **Round Robin:** reparte la CPU en turnos de tamaño `quantum`.
 
-- Es una simulación educativa: no modifica la planificación real del sistema operativo.
-- El motor avanza en unidades discretas de tiempo.
-- SJF y SRTF usan el modelo básico que conoce las duraciones. En sistemas reales se estiman.
-- Los empates se resuelven de forma determinista: llegada más antigua y luego orden de carga.
-- La espera se acumula únicamente mientras el proceso está en la cola de preparados; el tiempo bloqueado por E/S no se cuenta como espera.
-- En tiempo real se asume un procesador, tareas independientes, expropiación y costos configurables. Una utilización menor al 100 % no garantiza cualquier conjunto de tareas.
-- En MLFQ se contabiliza el consumo acumulado y hay ascensos periódicos para reducir postergación.
-- En lotería, una probabilidad positiva no garantiza un límite exacto de espera; la semilla permite repetir el experimento.
+## Fórmulas
 
-## Verificación
+- Retorno = finalización - llegada.
+- Espera = retorno - duración de CPU.
+- Respuesta inicial = primera ejecución - llegada.
 
-Si tiene Node.js instalado, ejecute:
+## Supuestos
 
-```powershell
-node tests/run-tests.js
-```
-
-Las pruebas cubren:
-
-- FCFS con espera promedio `10` y retorno promedio `15.5`.
-- SJF con espera promedio `5` y retorno promedio `10.5`.
-- SRTF con expropiación.
-- Round Robin y quantum.
-- Bloqueos por E/S.
-- Empates deterministas.
-- Envejecimiento.
-- Plazos de tiempo real.
-- Reproducción de lotería con la misma semilla.
-
-## Archivos
-
-- `index.html`: interfaz principal.
-- `styles.css`: diseño visual, contraste y modo exposición.
-- `js/sim-engine.js`: motor de simulación separado de la interfaz.
-- `js/app.js`: conexión entre controles, módulos, tablas y visualización.
-- `tests/run-tests.js`: verificaciones automáticas.
+Esta es una simulación educativa básica. Cada proceso tiene una sola ráfaga de CPU, no realiza entrada/salida y el costo de cambio de contexto es cero. La aplicación no controla la planificación real del sistema operativo.

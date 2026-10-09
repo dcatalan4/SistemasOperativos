@@ -3,120 +3,158 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Simulador de planificación de procesos e hilos</title>
+  <title>Simulador de Planificación de CPU</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class="topbar">
+  <header class="hero">
     <div>
       <p class="eyebrow">Sistemas Operativos</p>
-      <h1>Planificación de procesos e hilos</h1>
-      <p class="disclaimer">Simulación educativa: muestra decisiones de planificación, no controla la planificación real del sistema operativo.</p>
+      <h1>Simulador de Planificación de CPU</h1>
+      <p>Simulación educativa sencilla para comparar cómo cambia el uso de la CPU según el algoritmo seleccionado.</p>
     </div>
-    <button id="presentationBtn" class="icon-button" title="Modo exposición">⛶</button>
   </header>
 
-  <main class="app-shell">
-    <nav class="module-nav" aria-label="Módulos">
-      <button class="module-tab active" data-module="intro">1. Fundamentos<br><span>Estados, métricas y mecanismo</span></button>
-      <button class="module-tab" data-module="batch">2. Por lotes<br><span>FCFS, SJF y SRTF</span></button>
-      <button class="module-tab" data-module="interactive">3. Interactivos<br><span>RR, prioridades y reparto</span></button>
-      <button class="module-tab" data-module="realtime">4. Tiempo real<br><span>RM y EDF</span></button>
-      <button class="module-tab" data-module="threads">5. Hilos<br><span>Modelos y núcleos</span></button>
-    </nav>
-
-    <section class="lesson-panel">
-      <div class="lesson-copy">
-        <h2 id="moduleTitle"></h2>
-        <p id="moduleText"></p>
+  <main class="layout">
+    <section class="panel setup-panel">
+      <div class="section-title">
+        <h2>Procesos</h2>
+        <p>Agrega, modifica o elimina procesos. Cada proceso tiene una sola ráfaga de CPU.</p>
       </div>
 
-      <section class="control-strip" aria-label="Controles de simulación">
-        <label>Algoritmo
-          <select id="algorithmSelect"></select>
+      <form id="processForm" class="process-form">
+        <label>
+          Nombre
+          <input id="nameInput" maxlength="10" placeholder="P4" required>
         </label>
-        <label>Ejemplo
-          <select id="exampleSelect"></select>
+        <label>
+          Llegada
+          <input id="arrivalInput" type="number" min="0" step="1" placeholder="0" required>
         </label>
-        <label>Velocidad
-          <select id="speedSelect">
-            <option value="1200">Lenta</option>
-            <option value="700" selected>Media</option>
-            <option value="320">Rápida</option>
+        <label>
+          Duración
+          <input id="burstInput" type="number" min="1" step="1" placeholder="4" required>
+        </label>
+        <button type="submit">Agregar proceso</button>
+      </form>
+      <p id="formMessage" class="message" role="alert"></p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Proceso</th>
+              <th>Llegada</th>
+              <th>Duración</th>
+              <th>Color</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="processBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel controls-panel">
+      <div class="section-title">
+        <h2>Simulación</h2>
+        <p>Selecciona un algoritmo y compara los resultados usando los mismos procesos.</p>
+      </div>
+
+      <div class="control-grid">
+        <label>
+          Algoritmo
+          <select id="algorithmSelect">
+            <option value="fcfs">FCFS - Primero en llegar</option>
+            <option value="sjf">SJF - Trabajo más corto</option>
+            <option value="rr">Round Robin</option>
           </select>
         </label>
-        <label>Quantum
-          <input id="quantumInput" type="number" min="1" max="10" value="2">
+        <label id="quantumLabel" class="hidden">
+          Quantum
+          <input id="quantumInput" type="number" min="1" step="1" value="2">
         </label>
-        <label>Costo cambio
-          <input id="contextInput" type="number" min="0" max="5" value="0">
-        </label>
-        <label>Semilla
-          <input id="seedInput" type="number" min="1" value="7">
-        </label>
-      </section>
+      </div>
 
-      <section class="button-row" aria-label="Reproducción">
-        <button id="runBtn">▶ Iniciar</button>
-        <button id="pauseBtn">⏸ Pausar</button>
-        <button id="stepBtn">⏭ Avanzar</button>
-        <button id="resetBtn">↺ Reiniciar</button>
-      </section>
+      <div class="button-row">
+        <button id="simulateBtn" type="button">Simular</button>
+        <button id="clearBtn" type="button" class="secondary">Limpiar</button>
+        <button id="exampleBtn" type="button" class="secondary">Cargar ejemplo</button>
+      </div>
 
-      <section id="simulator" class="simulator-grid">
-        <article class="cpu-panel">
-          <p class="panel-label">Reloj simulado</p>
-          <div id="clock" class="clock">t = 0</div>
-          <p class="panel-label">CPU</p>
-          <div id="cpu" class="cpu idle">Ociosa</div>
-          <p id="decision" class="decision">Seleccione un ejemplo y avance la simulación.</p>
+      <article class="algorithm-info">
+        <h3>Explicación del algoritmo</h3>
+        <p id="algorithmExplanation"></p>
+        <p id="decisionExplanation"></p>
+      </article>
+    </section>
+
+    <section class="panel results-panel">
+      <div class="section-title">
+        <h2>Diagrama de Gantt</h2>
+        <p>La línea muestra qué proceso utiliza la CPU, cuándo inicia y cuándo termina.</p>
+      </div>
+      <div id="ganttChart" class="gantt"></div>
+    </section>
+
+    <section class="panel results-panel">
+      <div class="section-title">
+        <h2>Resultados</h2>
+        <p>Los cálculos usan una sola ráfaga de CPU, sin E/S y sin costo de cambio de contexto.</p>
+      </div>
+      <div id="summaryCards" class="summary-cards"></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Proceso</th>
+              <th>Llegada</th>
+              <th>Duración</th>
+              <th>Finalización</th>
+              <th>Retorno</th>
+              <th>Espera</th>
+              <th>Respuesta</th>
+            </tr>
+          </thead>
+          <tbody id="resultsBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel info-panel">
+      <div class="section-title">
+        <h2>Conceptos relacionados</h2>
+        <p>Estos temas se explican de forma breve; no se implementan como algoritmos en esta versión básica.</p>
+      </div>
+      <div class="info-grid">
+        <article>
+          <h3>Sistemas por lotes</h3>
+          <p>Ejecutan trabajos preparados previamente. Suelen buscar buen rendimiento y tiempos promedio razonables.</p>
         </article>
-
-        <article class="queue-panel">
-          <h3>Estados</h3>
-          <div class="state-row"><strong>Preparados</strong><div id="readyQueue" class="chips"></div></div>
-          <div class="state-row"><strong>Bloqueados</strong><div id="blockedQueue" class="chips"></div></div>
-          <div class="state-row"><strong>Terminados</strong><div id="doneQueue" class="chips"></div></div>
-          <div id="queueVisual" class="queue-visual"></div>
+        <article>
+          <h3>Sistemas interactivos</h3>
+          <p>Necesitan responder rápido a las acciones del usuario, por ejemplo al escribir o mover una ventana.</p>
         </article>
-
-        <article class="gantt-panel">
-          <h3>Diagrama de Gantt</h3>
-          <div id="gantt" class="gantt"></div>
+        <article>
+          <h3>Prioridades</h3>
+          <p>Favorecen procesos más importantes. Si no se controlan, pueden dejar esperando a procesos de baja prioridad.</p>
         </article>
-
-        <article class="metrics-panel">
-          <h3>Métricas</h3>
-          <div id="metrics" class="metric-grid"></div>
-          <div id="lotteryBox" class="lottery-box"></div>
+        <article>
+          <h3>Tiempo real</h3>
+          <p>Planifican tareas que deben cumplir tiempos límite. En algunos sistemas, fallar un plazo es crítico.</p>
         </article>
-
-        <article class="table-panel">
-          <h3>Procesos</h3>
-          <form id="processForm" class="process-form">
-            <input id="pidInput" placeholder="ID" maxlength="6">
-            <input id="arrivalInput" type="number" min="0" placeholder="Llegada">
-            <input id="burstInput" type="number" min="1" placeholder="Ráfaga">
-            <input id="priorityInput" type="number" placeholder="Prioridad">
-            <input id="ticketsInput" type="number" min="1" placeholder="Boletos">
-            <input id="userInput" placeholder="Usuario">
-            <button type="submit">Agregar</button>
-          </form>
-          <p id="formError" class="form-error" role="alert"></p>
-          <div id="processTable" class="table-wrap"></div>
+        <article>
+          <h3>Planificación de hilos</h3>
+          <p>Decide qué hilo utiliza la CPU. Los hilos pueden pertenecer al mismo proceso o a procesos distintos.</p>
         </article>
-
-        <article class="event-panel">
-          <h3>Registro de eventos</h3>
-          <ol id="eventLog" class="event-log"></ol>
+        <article>
+          <h3>Política y mecanismo</h3>
+          <p>La política define el criterio de elección; el mecanismo aplica esa decisión mediante colas y cambios de contexto.</p>
         </article>
-      </section>
-
-      <section id="specialPanel" class="special-panel"></section>
+      </div>
     </section>
   </main>
 
-  <script src="js/sim-engine.js"></script>
-  <script src="js/app.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
