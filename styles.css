@@ -374,6 +374,18 @@ td input {
   text-transform: uppercase;
 }
 
+.muted-card {
+  background: #f8fafc;
+  color: #94a3b8;
+}
+
+.empty-cell {
+  padding: 22px 12px;
+  color: var(--muted);
+  font-weight: 750;
+  text-align: center;
+}
+
 .info-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(210px, 1fr));

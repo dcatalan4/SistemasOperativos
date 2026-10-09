@@ -14,9 +14,9 @@ Abra `index.html` directamente en un navegador. No requiere servidor, base de da
 - Ejemplo inicial con `P1`, `P2` y `P3`.
 - Selector de algoritmo.
 - Campo de quantum cuando se selecciona Round Robin.
-- Diagrama de Gantt con colores por proceso.
-- Animación paso a paso al presionar **Simular**.
-- Tabla de resultados.
+- Diagrama de Gantt con colores por proceso, visible solo después de presionar **Simular**.
+- Animación paso a paso: cada unidad de tiempo de la simulación tarda un segundo real.
+- Tabla de resultados al terminar la simulación.
 - Promedios de espera, retorno y respuesta inicial.
 - Explicaciones educativas breves.
 
@@ -24,6 +24,7 @@ Abra `index.html` directamente en un navegador. No requiere servidor, base de da
 
 - **FCFS:** primero en llegar, primero en ser atendido.
 - **SJF no expropiativo:** cuando la CPU queda libre, ejecuta el proceso disponible con menor duración.
+- **SRTF:** versión expropiativa que en cada unidad ejecuta el proceso con menor tiempo restante.
 - **Round Robin:** reparte la CPU en turnos de tamaño `quantum`.
 
 ## Fórmulas

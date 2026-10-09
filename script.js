@@ -11,6 +11,7 @@
   const explanations = {
     fcfs: "FCFS ejecuta los procesos en orden de llegada. Una vez que un proceso entra a la CPU, no se interrumpe hasta terminar.",
     sjf: "SJF no expropiativo espera a que la CPU quede libre y elige, entre los procesos disponibles, el que tenga menor duración.",
+    srtf: "SRTF es expropiativo: en cada unidad de tiempo ejecuta el proceso disponible con menor tiempo restante. Si llega uno más corto, puede interrumpir al actual.",
     rr: "Round Robin reparte la CPU en turnos llamados quantum. Si un proceso no termina en su turno, vuelve al final de la cola."
   };
 
@@ -82,6 +83,48 @@
     return buildResult("sjf", gantt, finished, "Cada vez que la CPU quedó libre, se eligió el proceso disponible con la menor duración.");
   }
 
+  function simulateSrtf(input) {
+    const rows = cloneProcesses(input).map((process) => ({
+      ...process,
+      remaining: process.burst,
+      firstStart: null,
+      finish: null
+    }));
+    const gantt = [];
+    let time = Math.min(...rows.map((process) => process.arrival));
+    const firstArrival = time;
+
+    if (firstArrival > 0) {
+      appendSegment(gantt, { name: "Ociosa", start: 0, end: firstArrival, idle: true });
+    }
+
+    while (rows.some((process) => process.remaining > 0)) {
+      const available = rows
+        .filter((process) => process.arrival <= time && process.remaining > 0)
+        .sort((a, b) => a.remaining - b.remaining || byArrival(a, b));
+
+      if (available.length === 0) {
+        const nextArrival = Math.min(...rows.filter((process) => process.remaining > 0).map((process) => process.arrival));
+        appendSegment(gantt, { name: "Ociosa", start: time, end: nextArrival, idle: true });
+        time = nextArrival;
+        continue;
+      }
+
+      const selected = available[0];
+      if (selected.firstStart === null) selected.firstStart = time;
+      appendSegment(gantt, { ...selected, start: time, end: time + 1 });
+      selected.remaining -= 1;
+      time += 1;
+
+      if (selected.remaining === 0) {
+        selected.finish = time;
+      }
+    }
+
+    const finished = rows.map((process) => makeResultRow(process, process.firstStart, process.finish));
+    return buildResult("srtf", gantt, finished, "En cada unidad de tiempo se eligió el proceso disponible con menor tiempo restante; por eso puede haber interrupciones.");
+  }
+
   function simulateRoundRobin(input, quantum) {
     const sorted = cloneProcesses(input).sort(byArrival).map((process) => ({
       ...process,
@@ -131,6 +174,20 @@
     return buildResult("rr", gantt, finished, `Se usó quantum ${quantum}. Si un proceso no terminó en su turno, volvió al final de la cola.`);
   }
 
+  function appendSegment(gantt, segment) {
+    const previous = gantt[gantt.length - 1];
+    const sameProcess = previous
+      && previous.name === segment.name
+      && previous.idle === segment.idle
+      && previous.end === segment.start;
+
+    if (sameProcess) {
+      previous.end = segment.end;
+    } else {
+      gantt.push(segment);
+    }
+  }
+
   function makeResultRow(process, firstStart, finish) {
     const turnaround = finish - process.arrival;
     const wait = turnaround - process.burst;
@@ -157,6 +214,7 @@
   function simulate(input, algorithm, quantum) {
     if (input.length === 0) return buildResult(algorithm, [], [], "No hay procesos para simular.");
     if (algorithm === "sjf") return simulateSjf(input);
+    if (algorithm === "srtf") return simulateSrtf(input);
     if (algorithm === "rr") return simulateRoundRobin(input, Math.max(1, Number(quantum) || 1));
     return simulateFcfs(input);
   }
@@ -165,9 +223,9 @@
     $("processForm").addEventListener("submit", addProcess);
     $("algorithmSelect").addEventListener("change", () => {
       updateQuantumVisibility();
-      renderPreview();
+      prepareSimulation();
     });
-    $("quantumInput").addEventListener("input", renderPreview);
+    $("quantumInput").addEventListener("input", prepareSimulation);
     $("simulateBtn").addEventListener("click", () => runSimulation(true));
     $("clearBtn").addEventListener("click", clearAll);
     $("exampleBtn").addEventListener("click", loadExample);
@@ -179,7 +237,7 @@
     processes = cloneProcesses(defaultProcesses);
     renderProcesses();
     showMessage("");
-    renderPreview();
+    prepareSimulation();
     if (animate) runSimulation(true);
   }
 
@@ -206,7 +264,7 @@
     event.target.reset();
     showMessage("");
     renderProcesses();
-    renderPreview();
+    prepareSimulation();
   }
 
   function updateProcess(event) {
@@ -235,7 +293,7 @@
     }
 
     showMessage("");
-    renderPreview();
+    prepareSimulation();
   }
 
   function deleteProcess(event) {
@@ -243,22 +301,21 @@
     processes.splice(index, 1);
     processes = processes.map((process, order) => ({ ...process, order }));
     renderProcesses();
-    renderPreview();
+    prepareSimulation();
   }
 
   function clearAll() {
     stopAnimation();
     processes = [];
     renderProcesses();
-    renderResult(buildResult(getAlgorithm(), [], [], "Agrega procesos para iniciar la simulación."), { partialGantt: [] });
+    clearSimulationOutput("Agrega procesos para iniciar la simulación.");
     setBoard("Lista", "t = 0", "Pendiente");
-    $("simulationStatus").textContent = "Lista limpia. Agrega procesos o carga el ejemplo inicial.";
   }
 
   function runSimulation(animated) {
     const result = getCurrentResult();
     if (result.gantt.length === 0) {
-      renderResult(result, { partialGantt: [] });
+      clearSimulationOutput(result.decision);
       setBoard("Sin procesos", "t = 0", "Pendiente");
       return;
     }
@@ -271,13 +328,16 @@
     animateResult(result);
   }
 
-  function renderPreview() {
+  function prepareSimulation() {
     stopAnimation();
     const result = getCurrentResult();
-    renderResult(result);
     const totalTime = result.gantt.length ? result.gantt[result.gantt.length - 1].end : 0;
-    setBoard("Lista", `t = ${totalTime}`, orderText(result));
-    $("simulationStatus").textContent = "Vista calculada. Presiona Simular para reproducir la ejecución paso a paso.";
+    $("algorithmExplanation").textContent = explanations[result.algorithm] || explanations.fcfs;
+    $("decisionExplanation").textContent = result.gantt.length
+      ? `La simulación está preparada. Durará ${totalTime} segundo${totalTime === 1 ? "" : "s"} porque cada unidad de tiempo se anima como un segundo real.`
+      : "No hay procesos para simular.";
+    clearSimulationOutput("Presiona Simular para pintar el Gantt y calcular los resultados.");
+    setBoard("Lista", "t = 0", "Pendiente");
   }
 
   function getCurrentResult() {
@@ -292,32 +352,36 @@
     stopAnimation();
     $("simulateBtn").disabled = true;
     $("simulateBtn").textContent = "Simulando...";
-    $("simulationStatus").textContent = "Ejecutando la línea de tiempo...";
-    renderResult(result, { partialGantt: [] });
+    $("algorithmExplanation").textContent = explanations[result.algorithm] || explanations.fcfs;
+    $("decisionExplanation").textContent = result.decision;
+    clearSimulationOutput("Ejecutando la línea de tiempo...");
 
-    let index = 0;
+    let currentTime = result.gantt[0].start;
+    const finalTime = result.gantt[result.gantt.length - 1].end;
     const paintStep = () => {
-      const segment = result.gantt[index];
-      const partial = result.gantt.slice(0, index + 1);
-      renderResult(result, { partialGantt: partial, activeIndex: index });
-      setBoard(segment.idle ? "Ociosa" : segment.name, `t = ${segment.end}`, orderText({ gantt: partial }));
-      $("simulationStatus").textContent = segment.idle
-        ? `La CPU queda ociosa de t=${segment.start} a t=${segment.end}.`
-        : `${segment.name} usa la CPU de t=${segment.start} a t=${segment.end}.`;
-      index += 1;
+      currentTime += 1;
+      const partial = partialGanttAt(result.gantt, currentTime);
+      const activeIndex = partial.length - 1;
+      const segment = partial[activeIndex];
 
-      if (index >= result.gantt.length) {
+      renderGantt(partial, activeIndex);
+      renderEmptyResults();
+      setBoard(segment.idle ? "Ociosa" : segment.name, `t = ${currentTime}`, orderText({ gantt: partial }));
+      $("simulationStatus").textContent = segment.idle
+        ? `Segundo ${currentTime}: la CPU está ociosa.`
+        : `Segundo ${currentTime}: ${segment.name} está usando la CPU.`;
+
+      if (currentTime >= finalTime) {
         stopAnimation(false);
         $("simulateBtn").disabled = false;
         $("simulateBtn").textContent = "Simular";
-        $("simulationStatus").textContent = "Simulación terminada. Puedes cambiar datos o algoritmo y volver a simular.";
+        renderResult(result);
+        setBoard("Terminada", `t = ${finalTime}`, orderText(result));
+        $("simulationStatus").textContent = "Simulación terminada. Los resultados ya están calculados.";
       }
     };
 
-    paintStep();
-    if (animationTimer === null && result.gantt.length > 1) {
-      animationTimer = window.setInterval(paintStep, 650);
-    }
+    animationTimer = window.setInterval(paintStep, 1000);
   }
 
   function stopAnimation(resetButton = true) {
@@ -337,6 +401,25 @@
     renderGantt(options.partialGantt || result.gantt, options.activeIndex);
     renderSummary(result.averages);
     renderResultsTable(result.rows);
+  }
+
+  function clearSimulationOutput(message) {
+    renderGantt([]);
+    renderEmptyResults();
+    $("simulationStatus").textContent = message;
+  }
+
+  function renderEmptyResults() {
+    $("summaryCards").innerHTML = `
+      <div class="summary-card muted-card"><strong>--</strong><span>Espera promedio</span></div>
+      <div class="summary-card muted-card"><strong>--</strong><span>Retorno promedio</span></div>
+      <div class="summary-card muted-card"><strong>--</strong><span>Respuesta promedio</span></div>
+    `;
+    $("resultsBody").innerHTML = `
+      <tr>
+        <td colspan="7" class="empty-cell">Los resultados aparecerán cuando termine la simulación.</td>
+      </tr>
+    `;
   }
 
   function renderProcesses() {
@@ -374,6 +457,13 @@
       block.innerHTML = `<span>${escapeHtml(segment.name)}</span><small>${segment.start} - ${segment.end}</small>`;
       chart.appendChild(block);
     });
+  }
+
+  function partialGanttAt(gantt, time) {
+    return gantt
+      .filter((segment) => segment.start < time)
+      .map((segment) => ({ ...segment, end: Math.min(segment.end, time) }))
+      .filter((segment) => segment.end > segment.start);
   }
 
   function renderSummary(averages) {
@@ -443,6 +533,6 @@
   }
 
   if (typeof module !== "undefined" && module.exports) {
-    module.exports = { simulate, simulateFcfs, simulateSjf, simulateRoundRobin, cloneProcesses };
+    module.exports = { simulate, simulateFcfs, simulateSjf, simulateSrtf, simulateRoundRobin, cloneProcesses };
   }
 })();
