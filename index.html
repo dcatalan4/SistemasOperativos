@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simulador de planificación de procesos e hilos</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">Sistemas Operativos</p>
+      <h1>Planificación de procesos e hilos</h1>
+      <p class="disclaimer">Simulación educativa: muestra decisiones de planificación, no controla la planificación real del sistema operativo.</p>
+    </div>
+    <button id="presentationBtn" class="icon-button" title="Modo exposición">⛶</button>
+  </header>
+
+  <main class="app-shell">
+    <nav class="module-nav" aria-label="Módulos">
+      <button class="module-tab active" data-module="intro">1. Fundamentos<br><span>Estados, métricas y mecanismo</span></button>
+      <button class="module-tab" data-module="batch">2. Por lotes<br><span>FCFS, SJF y SRTF</span></button>
+      <button class="module-tab" data-module="interactive">3. Interactivos<br><span>RR, prioridades y reparto</span></button>
+      <button class="module-tab" data-module="realtime">4. Tiempo real<br><span>RM y EDF</span></button>
+      <button class="module-tab" data-module="threads">5. Hilos<br><span>Modelos y núcleos</span></button>
+    </nav>
+
+    <section class="lesson-panel">
+      <div class="lesson-copy">
+        <h2 id="moduleTitle"></h2>
+        <p id="moduleText"></p>
+      </div>
+
+      <section class="control-strip" aria-label="Controles de simulación">
+        <label>Algoritmo
+          <select id="algorithmSelect"></select>
+        </label>
+        <label>Ejemplo
+          <select id="exampleSelect"></select>
+        </label>
+        <label>Velocidad
+          <select id="speedSelect">
+            <option value="1200">Lenta</option>
+            <option value="700" selected>Media</option>
+            <option value="320">Rápida</option>
+          </select>
+        </label>
+        <label>Quantum
+          <input id="quantumInput" type="number" min="1" max="10" value="2">
+        </label>
+        <label>Costo cambio
+          <input id="contextInput" type="number" min="0" max="5" value="0">
+        </label>
+        <label>Semilla
+          <input id="seedInput" type="number" min="1" value="7">
+        </label>
+      </section>
+
+      <section class="button-row" aria-label="Reproducción">
+        <button id="runBtn">▶ Iniciar</button>
+        <button id="pauseBtn">⏸ Pausar</button>
+        <button id="stepBtn">⏭ Avanzar</button>
+        <button id="resetBtn">↺ Reiniciar</button>
+      </section>
+
+      <section id="simulator" class="simulator-grid">
+        <article class="cpu-panel">
+          <p class="panel-label">Reloj simulado</p>
+          <div id="clock" class="clock">t = 0</div>
+          <p class="panel-label">CPU</p>
+          <div id="cpu" class="cpu idle">Ociosa</div>
+          <p id="decision" class="decision">Seleccione un ejemplo y avance la simulación.</p>
+        </article>
+
+        <article class="queue-panel">
+          <h3>Estados</h3>
+          <div class="state-row"><strong>Preparados</strong><div id="readyQueue" class="chips"></div></div>
+          <div class="state-row"><strong>Bloqueados</strong><div id="blockedQueue" class="chips"></div></div>
+          <div class="state-row"><strong>Terminados</strong><div id="doneQueue" class="chips"></div></div>
+          <div id="queueVisual" class="queue-visual"></div>
+        </article>
+
+        <article class="gantt-panel">
+          <h3>Diagrama de Gantt</h3>
+          <div id="gantt" class="gantt"></div>
+        </article>
+
+        <article class="metrics-panel">
+          <h3>Métricas</h3>
+          <div id="metrics" class="metric-grid"></div>
+          <div id="lotteryBox" class="lottery-box"></div>
+        </article>
+
+        <article class="table-panel">
+          <h3>Procesos</h3>
+          <form id="processForm" class="process-form">
+            <input id="pidInput" placeholder="ID" maxlength="6">
+            <input id="arrivalInput" type="number" min="0" placeholder="Llegada">
+            <input id="burstInput" type="number" min="1" placeholder="Ráfaga">
+            <input id="priorityInput" type="number" placeholder="Prioridad">
+            <input id="ticketsInput" type="number" min="1" placeholder="Boletos">
+            <input id="userInput" placeholder="Usuario">
+            <button type="submit">Agregar</button>
+          </form>
+          <p id="formError" class="form-error" role="alert"></p>
+          <div id="processTable" class="table-wrap"></div>
+        </article>
+
+        <article class="event-panel">
+          <h3>Registro de eventos</h3>
+          <ol id="eventLog" class="event-log"></ol>
+        </article>
+      </section>
+
+      <section id="specialPanel" class="special-panel"></section>
+    </section>
+  </main>
+
+  <script src="js/sim-engine.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
