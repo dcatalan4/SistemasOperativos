@@ -3,9 +3,10 @@
 
   const colors = ["#2563eb", "#dc2626", "#16a34a", "#d97706", "#7c3aed", "#0891b2", "#be123c", "#4d7c0f"];
   const defaultProcesses = [
-    { name: "P1", arrival: 0, burst: 5 },
-    { name: "P2", arrival: 0, burst: 3 },
-    { name: "P3", arrival: 0, burst: 1 }
+    { name: "P1", arrival: 0, burst: 12 },
+    { name: "P2", arrival: 2, burst: 6 },
+    { name: "P3", arrival: 3, burst: 3 },
+    { name: "P4", arrival: 4, burst: 1 }
   ];
 
   const explanations = {

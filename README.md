@@ -11,7 +11,7 @@ Abra `index.html` directamente en un navegador. No requiere servidor, base de da
 - Procesos editables con nombre, tiempo de llegada y duración.
 - Botón para agregar procesos.
 - Botón para limpiar la lista.
-- Ejemplo inicial con `P1`, `P2` y `P3`.
+- Ejemplo inicial con `P1`, `P2`, `P3` y `P4`.
 - Selector de algoritmo.
 - Campo de quantum cuando se selecciona Round Robin.
 - Diagrama de Gantt con colores por proceso, visible solo después de presionar **Simular**.
